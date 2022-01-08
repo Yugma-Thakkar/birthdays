@@ -75,5 +75,3 @@ def edit():
 
     return "ok"
 
-# @app.route()
-#    
