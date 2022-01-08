@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap" rel="stylesheet">
+        <link href="/static/styles.css" rel="stylesheet">
+        <title>Birthdays</title>
+    </head>
+    <body>
+        <div class="jumbotron">
+            <h1>Birthdays</h1>
+        </div>
+        <div class="container">
+            <div class="section">
+
+                <h2>Add a Birthday</h2>
+                <!-- TODO: Create a form for users to submit a name, a month, and a day -->
+                <form action="/insert" method="post">
+                    <input autofocus autocomplete="off" name="name" placeholder="Name" type="text">
+                    <input autocomplete="off" name="month" placeholder="Month" type="number">
+                    <input autocomplete="off" name="day" placeholder="Day" type="number">
+                    <input type="submit" value="Add Birthday">
+                </form>
+            </div>
+
+            <div class="section">
+
+                <h2>All Birthdays</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th id="name" class="th">Name</th>
+                            <th id="bday" class="th">Birthday</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- TODO: Loop through the database entries to display them in this table -->
+                        {% for birthday in birthdays %}
+                            <tr id="row_{{birthday.name}}">
+                                <td> {{birthday.name}} </td>
+                                <td>
+                                    <form action="/edit" method="post">
+                                        <input type='text' name="bday" value='{{birthday.month}}/{{birthday.day}}' data-birthday="{{birthday.month}}/{{birthday.day}}" data-name="{{birthday.name}}" class="edit">
+                                        <input type="hidden" name="name" value="{{birthday.name}}">
+                                        <input type='hidden' name="edit_bday" value='save'>
+                                    </form>
+                                    
+                                </td>
+                                <td> <form action="/delete" method="post">
+                                    <input type="submit" value="delete" name="delete" class="delete" data-name="{{birthday.name}}">
+                                    <script>console.log("{{birthday.name}}")</script>
+                                    <input type="hidden" name="birthday_id" value="{{birthday.name}}">
+                                    <!-- <input type="submit" value="Edit Name" name="edit" id="edit">
+                                    <input type="hidden" name="edit_name" value="{{birthday.name}}"> -->
+                                </form> </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <script>
+            let person = document.querySelectorAll(".delete");
+            for (let i = 0; i < person.length; i++) {
+                person[i].addEventListener("click", function(e) {
+                    alert("You want to delete " + person[i].dataset.name);
+                    let ajax = new XMLHttpRequest();
+
+                    ajax.onreadystatechange = function() {
+                        // alert(ajax.readyState);
+                        if (ajax.readyState == 4 && ajax.status == 200) {
+                            document.getElementById("row_" + person[i].dataset.name).remove();
+                            alert("Deleted!")
+                        }
+                    }
+                    ajax.open('POST', encodeURI("/delete?username=" + person[i].dataset.name), true)
+                    ajax.send();
+                    e.preventDefault();
+                    return false;
+                })
+            }
+
+            let edit = document.querySelectorAll(".edit");
+            for (let i = 0; i < edit.length; i++) {
+                edit[i].addEventListener("change", function(e) {
+                    // alert("hi bro");
+                    let ajax = new XMLHttpRequest();
+
+                    ajax.onreadystatechange = function() {
+                        // alert("hi saar");
+                        if (ajax.readyState == 4 && ajax.status == 200) {
+                            // alert(ajax.responseText)
+                        }
+                    }
+                    ajax.open('POST', "/edit?bday=" + edit[i].value + "&name=" + edit[i].dataset.name, true)
+                    ajax.send();
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    return false;
+                })
+            }
+
+        /*
+            setTimeout(fn, time) => calls fn after time milliseconds - calls only once
+            setInterval(fn, interval) => calls fn every interval milliseconds
+        */
+            
+            setInterval(function(){
+                let ajax = new XMLHttpRequest();
+
+                ajax.onreadystatechange = function() {
+                    if (ajax.readyState == 4 && ajax.status == 200) {
+                        let response = JSON.parse(ajax.responseText);
+                        // update UI according to the response
+                        console.log(response);
+                        for (let i = 0; i < response.length; i++) {
+                            // console.log("Name is " + response[i].name + ".");
+                            // console.log("Birthday is on " + response[i].month + "/" + response[i].day + ".");
+                        }
+                        updateUI(response);
+                    }
+                }
+                ajax.open("GET", "/?response=json", true);
+                ajax.send();
+            }, 3000) 
+            
+            function updateUI(data) {
+                let editBdays = document.querySelectorAll(".edit");
+                let bday = "";
+                /*
+                response from application.py
+                example response: [
+                    {
+                        "op": "edit",
+                        "name": "nood",
+                        "month" = "5"
+                        "day" = "12"
+                    }
+                ]
+                */
+                
+                // editBdays = document.querySelecterAll(".edit")
+                for (let i = 0; i < data.length; i++) {
+                    for (let j = 0; j < editBdays.length; j++) {
+                        if (data[i].name == editBdays[j].dataset.name) {
+                            bday = data[i].month + "/" + data[i].day;
+                            editBdays[j].value = bday;
+                        }
+                    }
+                }
+                    
+
+                
+                // for (let i = 0; i < data.length; i++){
+                //     bday = data[i].month + "/" + data[i].day;
+                //     editBday[i].value = bday;
+                // }
+                
+            }
+        </script>
+    </body>
+</html>
